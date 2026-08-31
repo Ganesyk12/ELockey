@@ -35,11 +35,7 @@ async function submit() {
 }
 
 async function logout() {
-  try {
-    await api.lock();
-  } catch {
-    /* ignore */
-  }
+  try { await api.lock(); } catch { /* ignore */ }
   localStorage.removeItem("elockey.token");
   state.token = null;
   state.unlocked = false;
@@ -47,23 +43,28 @@ async function logout() {
 </script>
 
 <template>
-  <div class="card">
-    <div class="row">
-      <h1>Vault locked</h1>
-      <a class="link icon-link" title="Log out" aria-label="Log out" @click="logout"><i class="bi bi-box-arrow-right"></i></a>
+  <div class="auth-card">
+    <div class="auth-icon" style="background: rgba(16, 185, 129, 0.12); color: #10b981">
+      <i class="bi bi-lock"></i>
     </div>
-    <p class="subtitle">Enter your master key to decrypt and access your credentials. It is kept in memory only.</p>
+    <h1>Unlock Vault</h1>
+    <p class="subtitle">Enter your master key to decrypt your credentials</p>
 
     <p v-if="state.notice" class="notice">{{ state.notice }}</p>
 
-    <label for="uk-key"><i class="bi bi-key"></i> Master key</label>
-    <input id="uk-key" v-model="masterKey" type="password" autocomplete="current-password" @keydown.enter="submit" />
+    <div class="form-group">
+      <label for="uk-key">Master key</label>
+      <input id="uk-key" v-model="masterKey" type="password" autocomplete="current-password" placeholder="Enter master key" @keydown.enter="submit" />
+    </div>
 
     <p v-if="error" class="error">{{ error }}</p>
 
-    <button :disabled="busy" @click="submit">
-      <i class="bi bi-unlock"></i>
-      {{ busy ? "Unlocking…" : "Unlock" }}
+    <button class="btn btn-primary" :disabled="busy" @click="submit">
+      {{ busy ? "Unlocking..." : "Unlock" }}
+    </button>
+
+    <button class="btn btn-ghost" @click="logout">
+      <i class="bi bi-box-arrow-left"></i> Log out
     </button>
   </div>
 </template>
