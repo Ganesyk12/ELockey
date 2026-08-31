@@ -39,7 +39,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   let data: { error?: string } | null = null;
   try {
-    data = await res.json();
+    data = (await res.json()) as { error?: string };
   } catch {
     /* no JSON body */
   }
