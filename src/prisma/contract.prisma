@@ -1,0 +1,40 @@
+// use prisma-next
+
+model User {
+  id         Uuid   @id @default(uuid())
+  username   String @unique
+  password   String
+  masterSalt String @default("")
+  masterHash String @default("")
+  createdAt  TimestamptzString @default(now())
+
+  vaults Vault[]
+}
+
+model Vault {
+  id        Uuid          @id @default(uuid())
+  userId    Uuid
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appsource String
+  fields    VaultField[]
+  createdAt TimestamptzString @default(now())
+  updatedAt TimestamptzString @default(now())
+
+  @@unique([userId, appsource])
+  @@index([userId])
+  @@index([appsource])
+}
+
+model VaultField {
+  id       Uuid   @id @default(uuid())
+  vaultId  Uuid
+  vault    Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  fieldKey String
+  salt     String
+  iv       String
+  tag      String
+  data     String
+
+  @@unique([vaultId, fieldKey])
+  @@index([vaultId])
+}

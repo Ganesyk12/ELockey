@@ -1,0 +1,32 @@
+{
+  "name": "elockey",
+  "module": "src/server.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express": "^5.0.6",
+    "prisma": "8.0.0-rc.12"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@prisma/orm-postgres": "8.0.0-rc.8",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "scripts": {
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit",
+    "guard": "bun scripts/guard.ts",
+    "server": "bun src/server.ts",
+    "db:init": "prisma db init",
+    "db:push": "prisma db update",
+    "db:push:dry": "prisma db update --dry-run",
+    "db:provision": "bash scripts/provision-schema.sh elockey",
+    "web:dev": "bun --cwd web node_modules/.bin/vite",
+    "web:build": "bun --cwd web node_modules/.bin/vite build",
+    "web:preview": "bun --cwd web node_modules/.bin/vite preview"
+  }
+}

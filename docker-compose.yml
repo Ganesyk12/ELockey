@@ -1,0 +1,13 @@
+services:
+  app:
+    container_name: elockey_app
+    build: .
+    networks:
+      - tunnel
+    env_file:
+      - .env
+    restart: unless-stopped
+
+networks:
+  tunnel:
+    external: true
