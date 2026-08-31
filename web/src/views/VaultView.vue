@@ -8,6 +8,7 @@ const detail = ref<EntryDetail | null>(null);
 const activeId = ref<string | null>(null);
 const showSecret = ref(false);
 const error = ref("");
+const notice = ref("");
 const busy = ref(false);
 
 const modal = reactive({
@@ -20,15 +21,24 @@ const modal = reactive({
   notes: "",
 });
 
+let noticeTimer: ReturnType<typeof setTimeout> | undefined;
+function showNotice(msg: string) {
+  notice.value = msg;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => {
+    notice.value = "";
+  }, 3000);
+}
+
 async function load() {
   error.value = "";
   busy.value = true;
   try {
     const res = await api.list();
     entries.value = res.entries;
-    const stillExists = entries.value.some((e) => e.id === activeId.value);
-    if (activeId.value && stillExists) {
-      await select(activeId.value);
+    const entry = entries.value.find((e) => e.id === activeId.value);
+    if (entry) {
+      await select(entry);
     } else {
       detail.value = null;
       activeId.value = null;
@@ -40,7 +50,8 @@ async function load() {
   }
 }
 
-async function select(entry: EntryMeta) {
+async function select(entry?: EntryMeta) {
+  if (!entry || !entry.id) return;
   if (activeId.value === entry.id) {
     activeId.value = null;
     detail.value = null;
@@ -103,6 +114,7 @@ async function save() {
     }
     modal.open = false;
     await load();
+    showNotice(modal.editing ? "Entry updated." : "Entry created.");
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -120,6 +132,7 @@ async function remove() {
     detail.value = null;
     activeId.value = null;
     await load();
+    showNotice("Entry deleted.");
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -230,7 +243,8 @@ onMounted(load);
         <label for="m-notes"><i class="bi bi-journal-text"></i> Notes</label>
         <input id="m-notes" v-model="modal.notes" type="text" autocomplete="off" />
 
-        <p v-if="error" class="error">{{ error }}</p>
+<p v-if="error" class="error">{{ error }}</p>
+    <p v-if="notice" class="notice">{{ notice }}</p>
 
         <div class="row" style="justify-content: flex-end">
           <button class="ghost" style="color: var(--muted)" @click="modal.open = false"><i class="bi bi-x-circle"></i> Cancel</button>

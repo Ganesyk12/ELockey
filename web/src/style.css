@@ -118,6 +118,12 @@ button.danger:hover {
   font-size: 13px;
 }
 
+.notice {
+  margin-top: 12px;
+  color: var(--ok);
+  font-size: 13px;
+}
+
 .row {
   display: flex;
   align-items: center;

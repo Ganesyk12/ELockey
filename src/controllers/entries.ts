@@ -7,6 +7,13 @@ import {
   storedToPayload,
 } from "../config/crypto";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function entryId(req: Request): string | null {
+  const id = req.params.id;
+  return typeof id === "string" && UUID_RE.test(id) ? id : null;
+}
+
 async function listEntries(req: Request, res: Response) {
   const list = await db.vault.findMany({
     where: { userId: req.userId },
@@ -18,8 +25,13 @@ async function listEntries(req: Request, res: Response) {
 
 async function getEntry(req: Request, res: Response) {
   const masterKey = req.masterKey!;
+  const id = entryId(req);
+  if (!id) {
+    res.status(404).json({ error: "Entry not found." });
+    return;
+  }
   const vault = await db.vault.findFirst({
-    where: { id: req.params.id as string, userId: req.userId },
+    where: { id, userId: req.userId },
   });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
@@ -87,8 +99,13 @@ async function updateEntry(req: Request, res: Response) {
   const masterKey = req.masterKey!;
   const userId = req.userId;
   const { appsource, username, password, notes } = req.body as Record<string, string>;
+  const id = entryId(req);
+  if (!id) {
+    res.status(404).json({ error: "Entry not found." });
+    return;
+  }
   const vault = await db.vault.findFirst({
-    where: { id: req.params.id as string, userId },
+    where: { id, userId },
   });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
@@ -135,8 +152,13 @@ async function updateEntry(req: Request, res: Response) {
 }
 
 async function deleteEntry(req: Request, res: Response) {
+  const id = entryId(req);
+  if (!id) {
+    res.status(404).json({ error: "Entry not found." });
+    return;
+  }
   const vault = await db.vault.findFirst({
-    where: { id: req.params.id as string, userId: req.userId },
+    where: { id, userId: req.userId },
   });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
