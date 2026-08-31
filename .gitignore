@@ -1,3 +1,6 @@
+# Prisma
+src/generated
+
 # dependencies (bun install)
 node_modules
 
@@ -21,6 +24,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.test.local
 .env.production.local
 .env.local
+scripts/*.json
 
 # caches
 .eslintcache
@@ -40,4 +44,5 @@ dist/
 .claude/
 .cursor/
 .devin/
+
 

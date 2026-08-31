@@ -12,8 +12,8 @@ import { extractToken, requireLogin } from "../middleware";
 export const authRouter = Router();
 
 authRouter.get("/status", async (_req, res) => {
-  const anyUser = await db.orm.public.User.select("id").limit(1).all();
-  res.json({ setup: anyUser.length > 0 });
+  const anyUser = await db.user.findFirst({ select: { id: true } });
+  res.json({ setup: !!anyUser });
 });
 
 authRouter.post("/register", async (req, res) => {
@@ -22,15 +22,14 @@ authRouter.post("/register", async (req, res) => {
     res.status(400).json({ error: "username and password are required." });
     return;
   }
-  const existing = await db.orm.public.User.where((u) => u.username.eq(username)).first();
+  const existing = await db.user.findUnique({ where: { username } });
   if (existing) {
     res.status(409).json({ error: "Username already taken." });
     return;
   }
   const { salt, hash } = hashMasterKey(password);
-  await db.orm.public.User.create({
-    username,
-    password: [salt, hash].join("."),
+  await db.user.create({
+    data: { username, password: [salt, hash].join(".") },
   });
   res.status(201).json({ ok: true });
 });
@@ -41,7 +40,7 @@ authRouter.post("/login", async (req, res) => {
     res.status(400).json({ error: "username and password are required." });
     return;
   }
-  const user = await db.orm.public.User.where((u) => u.username.eq(username)).first();
+  const user = await db.user.findUnique({ where: { username } });
   if (!user) {
     res.status(401).json({ error: "Invalid credentials." });
     return;
@@ -69,9 +68,9 @@ authRouter.post("/setKey", requireLogin, async (req, res) => {
     return;
   }
   const { salt, hash } = hashMasterKey(masterKey);
-  await db.orm.public.User.where({ id: req.userId }).update({
-    masterSalt: salt,
-    masterHash: hash,
+  await db.user.update({
+    where: { id: req.userId },
+    data: { masterSalt: salt, masterHash: hash },
   });
   res.json({ ok: true });
 });
@@ -82,7 +81,7 @@ authRouter.post("/unlock", requireLogin, async (req, res) => {
     res.status(400).json({ error: "masterKey is required." });
     return;
   }
-  const user = await db.orm.public.User.first({ id: req.userId });
+  const user = await db.user.findUnique({ where: { id: req.userId } });
   if (!user?.masterHash) {
     res.status(400).json({ error: "Master key not set. Run POST /api/setKey first." });
     return;

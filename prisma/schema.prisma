@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String    @id @default(uuid()) @db.Uuid
+  username   String    @unique
+  password   String
+  masterSalt String    @default("")
+  masterHash String    @default("")
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  vaults     Vault[]
+
+  @@map("user")
+}
+
+model Vault {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @db.Uuid
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appsource String
+  fields    VaultField[]
+  createdAt DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime     @default(now()) @db.Timestamptz(6)
+
+  @@unique([userId, appsource])
+  @@index([userId])
+  @@index([appsource])
+
+  @@map("vault")
+}
+
+model VaultField {
+  id       String @id @default(uuid()) @db.Uuid
+  vaultId  String @db.Uuid
+  vault    Vault  @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  fieldKey String
+  salt     String
+  iv       String
+  tag      String
+  data     String
+
+  @@unique([vaultId, fieldKey])
+  @@index([vaultId])
+
+  @@map("vaultField")
+}

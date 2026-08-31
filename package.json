@@ -7,13 +7,14 @@
     "@types/bun": "latest",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "prisma": "8.0.0-rc.12"
+    "prisma": "^7"
   },
   "peerDependencies": {
     "typescript": "^7"
   },
   "dependencies": {
-    "@prisma/orm-postgres": "8.0.0-rc.8",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -21,14 +22,12 @@
     "helmet": "^8.3.0"
   },
   "scripts": {
-    "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit",
-    "guard": "bun scripts/guard.ts",
+    "be": "bun src/server.ts",
     "server": "bun src/server.ts",
-    "db:init": "prisma db init",
-    "db:push": "prisma db update",
-    "db:push:dry": "prisma db update --dry-run",
-    "db:provision": "bash scripts/provision-schema.sh elockey",
+    "guard": "bun scripts/guard.ts",
+    "prisma": "prisma",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
     "web:dev": "bun --cwd web node_modules/.bin/vite",
     "web:build": "bun --cwd web node_modules/.bin/vite build",
     "web:preview": "bun --cwd web node_modules/.bin/vite preview"

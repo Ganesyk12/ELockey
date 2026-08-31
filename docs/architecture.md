@@ -28,7 +28,7 @@ sesi `unlock`.
 |--------------|------------------------------------------------------------------|
 | Runtime      | Bun (ESM, `bun` sebagai runner)                                  |
 | Web          | Express 5                                                        |
-| Data access  | Prisma Next / contract-first (`@prisma/orm-postgres`, v8 rc)      |
+| Data access  | Prisma ORM 7 classic (`@prisma/client` + `@prisma/adapter-pg`)
 | Database     | PostgreSQL ≥ 15 (schema fisik `elockey`)                          |
 | Config       | `dotenv` (file `.env`)                                           |
 | Container    | Docker (`oven/bun:1`), orchestration `docker-compose`             |
@@ -59,9 +59,9 @@ sesi `unlock`.
                        │                                │ encrypt/decrypt
                        ▼                                │
         ┌────────────────────────────────────┐          │
-        │  prisma/db.ts  (Prisma Next)       │──────────┘
-        │  contract.json · db.orm.public.*   │
-        │  pg.Pool  →  ?schema=elockey       │
+        │  prisma/db.ts  (Prisma ORM 7)      │──────────┘
+        │  PrismaClient + PrismaPg adapter   │
+        │  schema ← DATABASE_URL `?schema=`  │
         └────────────────────────────────────┘
                        │
                        ▼
@@ -92,19 +92,18 @@ src/
 ├── config/
 │   └── crypto.ts           # Enkripsi AES-256-GCM, hashing master key (scrypt)
 ├── prisma/
-│   ├── contract.prisma     # Skema data (kontrak) — model User / Vault / VaultField
-│   ├── contract.json       # Hasil emit: deskripsi kontrak untuk runtime
-│   ├── contract.d.ts       # Hasil emit: tipe TypeScript ber-type-check
-│   └── db.ts               # pg.Pool + runtime Prisma Next + seleksi schema
-└── helper/
-    └── prismaClient.ts     # Re-export `db`
+│   └── db.ts               # PrismaClient + adapter PrismaPg; schema dari `?schema=`
+├── generated/
+│   └── prisma/             # Hasil `prisma generate` (gitignored)
+prisma/
+└── schema.prisma           # Model User / Vault / VaultField (datasource polos)
 scripts/
-└── provision-schema.sh     # Provisioning tabel ke schema bernama (elockey)
+└── guard.ts                # Stamp verifikasi sebelum start (`guard.json`)
 ```
 
 ---
 
-## 5. Data Model (`contract.prisma`)
+## 5. Data Model (`prisma/schema.prisma`)
 
 ```
 User ── 1:N ── Vault ── 1:N ── VaultField
@@ -198,55 +197,50 @@ interface Session { userId; username; masterKey?: string }
 
 ---
 
-## 9. Prisma Next (contract-first) — Layer Data
+## 9. Prisma ORM (classic) — Layer Data
 
-### Contract & emit
-
-- Kontrak ditulis di `src/prisma/contract.prisma`.
-- `prisma contract emit` menghasilkan `contract.json` (IR untuk runtime) dan
-  `contract.d.ts` (tipa TypeScript) → `bun run contract:emit`.
-- Runtime `@prisma/orm-postgres` membaca `contract.json`; query seperti
-  `db.orm.public.User.where(...).all()` sudah fully type-checked terhadap
-  `contract.d.ts`.
-
-### Seleksi schema fisik
-
-`src/prisma/db.ts` mengekstrak `?schema=` dari `DATABASE_URL` (default
-`public`). Jika bukan `public`, kontrak di-deep-copy dan **id fisik** setiap
-storage namespace ditulis ulang ke schema target (`elockey`) — namespace logis
-`public` dipertahankan sehingga permukaan tipe `db.orm.public.*` tetap sama.
-
-### Provisioning schema
-
-`prisma db init` hanya emit DDL ke namespace `public`. Karena app bertarget
-schema `elockey`, `scripts/provision-schema.sh`:
-
-1. `db init` ke DB scratch → `pg_dump` DDL,
-2. drop tabel lama di schema target,
-3. re-apply DDL ke schema `elockey` via `search_path`.
+- Skema hidup di `prisma/schema.prisma` (Prisma ORM 7) sebagai datasource polos.
+  **Nama schema fisik tidak di-hardcode**: dipilih via `?schema=` pada
+  `DATABASE_URL` di `.env`, sehingga cukup ganti env untuk berpindah
+  schema/lokasi:
+  - **CLI** (`bun run db:push`) membaca `?schema=` dan membuat tabel ke schema
+    tersebut.
+  - **Runtime** (`src/prisma/db.ts`) membaca `?schema=` lalu meneruskannya ke
+    opsi `schema` pada adapter `@prisma/adapter-pg` (PrismaPg) — query yang
+    digenerate menarget schema yang sama.
+  Tanpa `?schema=` → default `public`.
+- `bun run db:generate` → `prisma generate` menulis client TypeScript ke
+  `src/generated/prisma` (gitignored; di Docker di-generate saat build).
+- `src/prisma/db.ts` membangun `PrismaClient` dengan driver adapter
+  `@prisma/adapter-pg` (PrismaPg). Query memakai API classic:
+  `db.user.findUnique(...)`, `db.vault.findMany(...)`,
+  `db.$transaction(async (tx) => ...)`.
+- **Tidak memakai migration files.** Struktur DB disinkronkan dengan
+  `bun run db:push` (`prisma db push`) — additive: menambahkan tabel,
+  constraint, dan index yang belum ada tanpa drop data.
 
 ---
 
 ## 10. Deployment (Docker)
 
-- **Dockerfile:** multi-stage (`oven/bun:1`) — install deps dengan
-  `bun install --frozen-lockfile`, kemudian image runtime `bun src/server.ts`.
-- **docker-compose.yml:** satu service `app`, env `NODE_ENV/HOST/PORT/DB_*`,
-  expose port `5655:5655`, `restart: unless-stopped`. Connection string
-  dibentuk dari `DB_*` + `?schema=${DB_SCHEMA:-elockey}`.
+- **Dockerfile:** multi-stage (`oven/bun:1`) — `bun install --frozen-lockfile`,
+  lalu `bun run prisma generate` saat build; runtime berjalan non-root
+  (`USER 1000:1000`) menjalankan `bun scripts/guard.ts --deployed &&
+  bun src/server.ts`.
+- **docker-compose.yml:** satu service `app`, `env_file: .env`, network
+  `tunnel` (external), tanpa publish port (dibalik nginx). `DATABASE_URL`
+  dipakai langsung; schema ditentukan oleh `?schema=` di `DATABASE_URL`.
 
 ---
 
 ## 11. Catatan & Batasan Saat Ini
 
-- **Backend-only** — belum ada frontend; semua endpoint mengembalikan JSON.
-- **Session in-memory** — tidak bertahan lama antar restart, tidak
-  terdistribusi (tidak cocok multi-instance).
+- **Session in-memory** — tidak bertahan antar restart, tidak terdistribusi
+  (tidak cocok multi-instance).
 - **Token statis** — tidak ada expiry, refresh, atau revoke yang persisten.
 - **Enkripsi di server** — master key dikirim ke server untuk dekripsi.
-  Peningkatan arsitektur: pindah enkripsi ke **client (WebCrypto)** agar master
+  Peningkatan yang mungkin: enkripsi **client-side (WebCrypto)** agar master
   key tidak pernah meninggalkan browser.
-- **Belum ada test otomatis** dan **belum ada commit git** (semua file
-  untracked).
-- `schema elockey` berisi tabel sisa eksperimen lawas (`masterKey`) yang tidak
-  ada di kontrak saat ini.
+- **Belum ada test otomatis**.
+- Struktur schema `elockey` disinkronkan via `bun run db:push`; tidak ada
+  history migration.

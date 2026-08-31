@@ -8,25 +8,26 @@ import {
 } from "../config/crypto";
 
 async function listEntries(req: Request, res: Response) {
-  const list = await db.orm.public.Vault.where((v) => v.userId.eq(req.userId))
-    .select("id", "appsource", "createdAt", "updatedAt")
-    .orderBy((v) => v.appsource.asc())
-    .all();
+  const list = await db.vault.findMany({
+    where: { userId: req.userId },
+    select: { id: true, appsource: true, createdAt: true, updatedAt: true },
+    orderBy: { appsource: "asc" },
+  });
   res.json({ entries: list });
 }
 
 async function getEntry(req: Request, res: Response) {
   const masterKey = req.masterKey!;
-  const vault = await db.orm.public.Vault.where((v) => v.id.eq(req.params.id as never))
-    .where((v) => v.userId.eq(req.userId))
-    .first();
+  const vault = await db.vault.findFirst({
+    where: { id: req.params.id as string, userId: req.userId },
+  });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
     return;
   }
-  const fields = await db.orm.public.VaultField.where((vf) =>
-    vf.vaultId.eq(vault.id)
-  ).all();
+  const fields = await db.vaultField.findMany({
+    where: { vaultId: vault.id },
+  });
 
   const decrypted: Record<string, string> = {};
   let valid = true;
@@ -56,8 +57,8 @@ async function createEntry(req: Request, res: Response) {
     return;
   }
 
-  const result = await db.transaction(async (tx) => {
-    const vault = await tx.orm.public.Vault.create({ userId, appsource });
+  const result = await db.$transaction(async (tx) => {
+    const vault = await tx.vault.create({ data: { userId, appsource } });
     const toEncrypt: Array<[string, string]> = [
       ["username", username],
       ["password", password],
@@ -65,13 +66,15 @@ async function createEntry(req: Request, res: Response) {
     if (notes !== undefined && notes !== "") toEncrypt.push(["notes", notes]);
     for (const [key, value] of toEncrypt) {
       const enc = encrypt(value, masterKey);
-      await tx.orm.public.VaultField.create({
-        vaultId: vault.id,
-        fieldKey: key,
-        salt: enc.salt,
-        iv: enc.iv,
-        tag: enc.tag,
-        data: enc.data,
+      await tx.vaultField.create({
+        data: {
+          vaultId: vault.id,
+          fieldKey: key,
+          salt: enc.salt,
+          iv: enc.iv,
+          tag: enc.tag,
+          data: enc.data,
+        },
       });
     }
     return vault;
@@ -84,17 +87,20 @@ async function updateEntry(req: Request, res: Response) {
   const masterKey = req.masterKey!;
   const userId = req.userId;
   const { appsource, username, password, notes } = req.body as Record<string, string>;
-  const vault = await db.orm.public.Vault.where((v) => v.id.eq(req.params.id as never))
-    .where((v) => v.userId.eq(userId))
-    .first();
+  const vault = await db.vault.findFirst({
+    where: { id: req.params.id as string, userId },
+  });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
     return;
   }
 
-  await db.transaction(async (tx) => {
+  await db.$transaction(async (tx) => {
     if (appsource !== undefined && appsource !== vault.appsource) {
-      await tx.orm.public.Vault.where({ id: vault.id }).update({ appsource });
+      await tx.vault.update({
+        where: { id: vault.id },
+        data: { appsource },
+      });
     }
     const writable: Array<[string, string]> = [];
     if (username !== undefined) writable.push(["username", username]);
@@ -102,26 +108,24 @@ async function updateEntry(req: Request, res: Response) {
     if (notes !== undefined) writable.push(["notes", notes]);
     for (const [key, value] of writable) {
       const enc = encrypt(value, masterKey);
-      const existing = await tx.orm.public.VaultField.where((vf) =>
-        vf.vaultId.eq(vault.id)
-      )
-        .where((vf) => vf.fieldKey.eq(key))
-        .first();
+      const existing = await tx.vaultField.findFirst({
+        where: { vaultId: vault.id, fieldKey: key },
+      });
       if (existing) {
-        await tx.orm.public.VaultField.where({ id: existing.id }).update({
-          salt: enc.salt,
-          iv: enc.iv,
-          tag: enc.tag,
-          data: enc.data,
+        await tx.vaultField.update({
+          where: { id: existing.id },
+          data: { salt: enc.salt, iv: enc.iv, tag: enc.tag, data: enc.data },
         });
       } else {
-        await tx.orm.public.VaultField.create({
-          vaultId: vault.id,
-          fieldKey: key,
-          salt: enc.salt,
-          iv: enc.iv,
-          tag: enc.tag,
-          data: enc.data,
+        await tx.vaultField.create({
+          data: {
+            vaultId: vault.id,
+            fieldKey: key,
+            salt: enc.salt,
+            iv: enc.iv,
+            tag: enc.tag,
+            data: enc.data,
+          },
         });
       }
     }
@@ -131,14 +135,14 @@ async function updateEntry(req: Request, res: Response) {
 }
 
 async function deleteEntry(req: Request, res: Response) {
-  const vault = await db.orm.public.Vault.where((v) => v.id.eq(req.params.id as never))
-    .where((v) => v.userId.eq(req.userId))
-    .first();
+  const vault = await db.vault.findFirst({
+    where: { id: req.params.id as string, userId: req.userId },
+  });
   if (!vault) {
     res.status(404).json({ error: "Entry not found." });
     return;
   }
-  await db.orm.public.Vault.where({ id: vault.id }).delete();
+  await db.vault.delete({ where: { id: vault.id } });
   res.json({ ok: true });
 }
 

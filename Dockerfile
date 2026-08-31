@@ -9,6 +9,7 @@ FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=install /app/node_modules ./node_modules
 COPY . .
+RUN bun run prisma generate
 RUN chown -R 1000:1000 /app/scripts
 USER 1000:1000
 EXPOSE 5655
