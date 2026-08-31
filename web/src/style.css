@@ -26,9 +26,34 @@ body {
 }
 
 .page {
-  max-width: 720px;
+  max-width: 520px;
   margin: 0 auto;
   padding: 24px 16px 48px;
+}
+
+.page .card {
+  margin: 0 auto;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.auth-page .card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-page .card h1 {
+  text-align: center;
+}
+
+.auth-page .card .subtitle {
+  text-align: center;
 }
 
 .card {
@@ -102,6 +127,12 @@ button.ghost {
 
 button.ghost:hover {
   background: rgba(47, 129, 247, 0.1);
+}
+
+button.toggle-mode {
+  margin-top: 12px;
+  margin-left: 14px;
+  margin-right: 14px;
 }
 
 button.danger {
@@ -219,6 +250,7 @@ a.link:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -232,11 +264,17 @@ a.link:hover {
 
 .entry .name {
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .entry .meta {
   color: var(--muted);
   font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .muted {
@@ -259,11 +297,25 @@ a.link:hover {
 .detail .k {
   color: var(--muted);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .detail .v {
   word-break: break-all;
   text-align: right;
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  .detail .kv {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .detail .v {
+    text-align: left;
+    word-break: break-word;
+  }
 }
 
 .secret-reveal {
@@ -285,6 +337,18 @@ a.link:hover {
 .modal {
   width: 100%;
   max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 599px) {
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal {
+    max-height: 94vh;
+  }
 }
 
 .empty {

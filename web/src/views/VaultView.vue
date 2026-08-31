@@ -243,8 +243,8 @@ onMounted(load);
         <label for="m-notes"><i class="bi bi-journal-text"></i> Notes</label>
         <input id="m-notes" v-model="modal.notes" type="text" autocomplete="off" />
 
-<p v-if="error" class="error">{{ error }}</p>
-    <p v-if="notice" class="notice">{{ notice }}</p>
+        <p v-if="error" class="error">{{ error }}</p>
+        <p v-if="notice" class="notice">{{ notice }}</p>
 
         <div class="row" style="justify-content: flex-end">
           <button class="ghost" style="color: var(--muted)" @click="modal.open = false"><i class="bi bi-x-circle"></i> Cancel</button>

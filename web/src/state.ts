@@ -7,6 +7,7 @@ export const state = reactive({
   setup: true,
   token: localStorage.getItem(TOKEN_KEY) as string | null,
   unlocked: false,
+  notice: "",
 });
 
 export function setToken(token: string): void {

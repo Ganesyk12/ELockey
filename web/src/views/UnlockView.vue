@@ -26,6 +26,7 @@ async function submit() {
       }
     }
     state.unlocked = true;
+    state.notice = "";
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -52,6 +53,8 @@ async function logout() {
       <a class="link icon-link" title="Log out" aria-label="Log out" @click="logout"><i class="bi bi-box-arrow-right"></i></a>
     </div>
     <p class="subtitle">Enter your master key to decrypt and access your credentials. It is kept in memory only.</p>
+
+    <p v-if="state.notice" class="notice">{{ state.notice }}</p>
 
     <label for="uk-key"><i class="bi bi-key"></i> Master key</label>
     <input id="uk-key" v-model="masterKey" type="password" autocomplete="current-password" @keydown.enter="submit" />

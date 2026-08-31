@@ -18,19 +18,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page">
-    <div v-if="!state.ready" class="loading">Loading&hellip;</div>
-    <template v-else-if="!state.setup">
-      <SetupView />
-    </template>
-    <template v-else-if="!state.token">
-      <LoginView />
-    </template>
-    <template v-else-if="!state.unlocked">
-      <UnlockView />
-    </template>
-    <template v-else>
-      <VaultView />
-    </template>
+  <div v-show="!state.ready" class="auth-page">
+    <div class="loading">Loading&hellip;</div>
+  </div>
+  <div v-show="state.ready && !state.setup" class="auth-page">
+    <SetupView />
+  </div>
+  <div v-show="state.ready && state.setup && !state.token" class="auth-page">
+    <LoginView />
+  </div>
+  <div v-show="state.ready && state.setup && state.token && !state.unlocked" class="auth-page">
+    <UnlockView />
+  </div>
+  <div v-show="state.ready && state.setup && state.token && state.unlocked" class="page">
+    <VaultView />
   </div>
 </template>
