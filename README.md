@@ -1,15 +1,25 @@
-# elockey
+# ELockey
 
-To install dependencies:
+🇮🇩 Bahasa Indonesia · [🇬🇧 English](./README.en.md)
 
-```bash
-bun install
-```
+Rumah aman untuk semua akun & password. Setiap data vault terenkripsi end-to-end, sehingga hanya pemilik master key yang bisa membukanya. Server tidak pernah menyimpan atau membaca isi vault.
 
-To run:
+![elockey flow](./docs/flow-animation.svg)
 
-```bash
-bun run index.ts
-```
+## Cara kerjanya
 
-This project was created using `bun init` in bun v1.4.0. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+1. **Akun dibuat dengan master key**
+   Master key adalah satu-satunya kunci milik pengguna. Ia **tidak pernah disimpan** — database hanya menyimpan hash-nya, jadi tidak ada yang bisa meniru atau mencurinya.
+
+2. **Data akun tersimpan di vault**
+   Username, password, atau catatan apa pun langsung dienkripsi di proses. Server tidak pernah melihat data asli.
+
+3. **Data dienkripsi sebelum tersimpan**
+   Setiap data dienkripsi dengan **AES-256-GCM**; kunci diturunkan dari master key (scrypt) dengan salt & IV acak per entry.
+
+4. **Yang tersimpan hanya ciphertext**
+   Database hanya menyimpan `salt.iv.tag.data` (teks terenkripsi). Zero plaintext — walau database bocor, isinya tetap tidak terbaca.
+
+> **No one knows, selain pemiliknya.**
+
+[**&#9654; Try now**](https://elockey.votagers.or.id/)
