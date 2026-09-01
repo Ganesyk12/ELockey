@@ -1,5 +1,7 @@
-FROM oven/bun:1 AS base
+FROM oven/bun:1-alphine AS base
 WORKDIR /app
+
+RUN apk add --no-cache openssl
 
 FROM base AS install
 COPY bun.lock package.json ./
