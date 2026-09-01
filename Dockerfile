@@ -1,4 +1,4 @@
-FROM oven/bun:1-alphine AS base
+FROM oven/bun:1-alpine AS base
 WORKDIR /app
 
 RUN apk add --no-cache openssl
