@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { api, ApiError } from "../api";
-import { state } from "../state";
+import { state, openDocs } from "../state";
 
 const masterKey = ref("");
 const error = ref("");
@@ -65,6 +65,14 @@ async function logout() {
 
     <button class="btn btn-ghost" @click="logout">
       <i class="bi bi-box-arrow-left"></i> Log out
+    </button>
+
+    <div class="auth-divider">
+      <span>atau</span>
+    </div>
+
+    <button type="button" class="btn btn-secondary docs-btn" @click="openDocs">
+      <i class="bi bi-book"></i> Dokumentasi & Panduan
     </button>
   </div>
 </template>

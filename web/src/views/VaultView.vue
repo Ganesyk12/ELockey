@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { api, type EntryDetail, type EntryMeta } from "../api";
-import { state, toggleTheme } from "../state";
+import { state, toggleTheme, openDocs } from "../state";
 
 const entries = ref<EntryMeta[]>([]);
 const detail = ref<EntryDetail | null>(null);
@@ -206,6 +206,9 @@ onMounted(load);
         <h1>ELockey</h1>
       </div>
       <div class="vault-header-actions">
+        <button class="icon-btn" title="Panduan & Dokumentasi" aria-label="Panduan & Dokumentasi" @click="openDocs">
+          <i class="bi bi-book"></i>
+        </button>
         <button class="icon-btn" title="Toggle theme" aria-label="Toggle theme" @click="toggleTheme">
           <i class="bi" :class="state.theme === 'dark' ? 'bi-sun' : 'bi-moon'"></i>
         </button>

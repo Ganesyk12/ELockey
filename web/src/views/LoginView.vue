@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { api } from "../api";
-import { setToken, state } from "../state";
+import { setToken, state, openDocs } from "../state";
 
 const mode = ref<"login" | "register">("login");
 const username = ref("");
 const password = ref("");
+const showPassword = ref(false);
 const error = ref("");
 const busy = ref(false);
 
@@ -53,7 +54,25 @@ function toggleMode() {
     </div>
     <div class="form-group">
       <label for="li-pass">Password</label>
-      <input id="li-pass" v-model="password" type="password" :autocomplete="mode === 'login' ? 'current-password' : 'new-password'" placeholder="Enter password" @keydown.enter="submit" />
+      <div class="input-wrap">
+        <input
+          id="li-pass"
+          v-model="password"
+          :type="showPassword ? 'text' : 'password'"
+          :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+          placeholder="Enter password"
+          @keydown.enter="submit"
+        />
+        <button
+          type="button"
+          class="toggle-vis"
+          :aria-label="showPassword ? 'Hide password' : 'Show password'"
+          :title="showPassword ? 'Hide password' : 'Show password'"
+          @click="showPassword = !showPassword"
+        >
+          <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+        </button>
+      </div>
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -64,6 +83,14 @@ function toggleMode() {
 
     <button class="btn btn-ghost" :disabled="busy" @click="toggleMode">
       {{ mode === "login" ? "Create an account" : "Log in instead" }}
+    </button>
+
+    <div class="auth-divider">
+      <span>atau</span>
+    </div>
+
+    <button type="button" class="btn btn-secondary docs-btn" @click="openDocs">
+      <i class="bi bi-book"></i> Dokumentasi & Panduan
     </button>
   </div>
 </template>

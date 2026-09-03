@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="440" viewBox="0 0 720 440" font-family="'JetBrains Mono','Fira Code',Consolas,Menlo,monospace" font-size="14">
+  <rect width="100%" height="100%" fill="#0d1117"/>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.1s" dur="0.4s" fill="freeze"/>
+    <text x="24" y="32" fill="#e6edf3" font-size="16" font-weight="bold">elockey — encrypted vault, end to end</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.6s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="52" fill="#58a6ff">/ 1. create account + master key (never stored)</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.9s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="70" fill="#58a6ff">/ 2. save data → 3. encrypt → 4. store ciphertext</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="1.6s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="106" fill="#8b949e">elockey$</text>
+    <text x="96" y="106" fill="#e6edf3">auth --new</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="2.4s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="128" fill="#8b949e">&gt; username ........ test_user</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="3.1s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="150" fill="#8b949e">&gt; master key ...... ****************</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="3.8s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="172" fill="#3fb950">[ok] account created — stored: scrypt hash only</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="4.6s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="212" fill="#8b949e">elockey$</text>
+    <text x="96" y="212" fill="#e6edf3">save github</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="5.4s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="234" fill="#8b949e">plain ........ ghu8:YC2k#p$z9?</text>
+    <text x="296" y="234" fill="#6e7681">(in memory only)</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="6.2s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="256" fill="#8b949e">encrypt ...... AES-256-GCM  ×  key=scrypt(masterKey, salt, 32B)</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="7.1s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="278" fill="#8b949e">store ........ salt.iv.tag.data  (base64)</text>
+    <text x="400" y="278" fill="#3fb950">ciphertext ✓</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="8.4s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="312" fill="#8b949e">what actually happens:</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="9.0s" dur="0.3s" fill="freeze"/>
+    <circle cx="90" cy="356" r="26" fill="#161b22" stroke="#30363d"/>
+    <circle cx="90" cy="343" r="8" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    <path d="M76 363 a14 14 0 0 1 28 0" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="9.4s" dur="0.3s" fill="freeze"/>
+    <line x1="118" y1="356" x2="154" y2="356" stroke="#30363d" stroke-width="2"/>
+    <polygon points="160,356 150,351 150,361" fill="#30363d"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="9.7s" dur="0.3s" fill="freeze"/>
+    <circle cx="270" cy="356" r="26" fill="#161b22" stroke="#30363d"/>
+    <circle cx="278" cy="348" r="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    <line x1="274" y1="352" x2="260" y2="366" stroke="#58a6ff" stroke-width="2"/>
+    <line x1="260" y1="366" x2="260" y2="372" stroke="#58a6ff" stroke-width="2"/>
+    <line x1="254" y1="360" x2="254" y2="366" stroke="#58a6ff" stroke-width="2"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="10.1s" dur="0.3s" fill="freeze"/>
+    <line x1="298" y1="356" x2="334" y2="356" stroke="#30363d" stroke-width="2"/>
+    <polygon points="340,356 330,351 330,361" fill="#30363d"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="10.4s" dur="0.3s" fill="freeze"/>
+    <circle cx="450" cy="356" r="26" fill="#161b22" stroke="#30363d"/>
+    <path d="M450 336 L464 342 L464 356 C464 367 457 372 450 376 C443 372 436 367 436 356 L436 342 Z" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    <path d="M447 354 v-4 a4 4 0 0 1 8 0 v4" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    <rect x="445" y="354" width="10" height="8" rx="2" fill="#58a6ff"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="10.8s" dur="0.3s" fill="freeze"/>
+    <line x1="478" y1="356" x2="514" y2="356" stroke="#30363d" stroke-width="2"/>
+    <polygon points="520,356 510,351 510,361" fill="#30363d"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="11.1s" dur="0.3s" fill="freeze"/>
+    <circle cx="630" cy="356" r="26" fill="#161b22" stroke="#30363d"/>
+    <ellipse cx="630" cy="350" rx="16" ry="6" fill="none" stroke="#58a6ff" stroke-width="2"/>
+    <path d="M614 350 v16 a16 6 0 0 0 32 0 v-16" fill="none" stroke="#58a6ff" stroke-width="2"/>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="9.0s" dur="0.3s" fill="freeze"/>
+    <text x="90" y="402" fill="#6e7681" text-anchor="middle">user key</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="9.7s" dur="0.3s" fill="freeze"/>
+    <text x="270" y="402" fill="#6e7681" text-anchor="middle">scrypt · 310k</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="10.4s" dur="0.3s" fill="freeze"/>
+    <text x="450" y="402" fill="#6e7681" text-anchor="middle">AES-256-GCM</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="11.1s" dur="0.3s" fill="freeze"/>
+    <text x="630" y="402" fill="#3fb950" text-anchor="middle">database</text>
+  </g>
+
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="12.4s" dur="0.3s" fill="freeze"/>
+    <text x="24" y="428" fill="#3fb950">[lock] ciphertext only — even the server cannot read it.</text>
+    <animate attributeName="opacity" values="0;1;1;0.4;1;1" keyTimes="0;0.03;0.85;0.9;0.92;1" begin="12.4s" dur="2.2s" repeatCount="indefinite"/>
+  </g>
+</svg>

@@ -12,6 +12,8 @@ const initialTheme: Theme =
 
 document.documentElement.classList.toggle("light", initialTheme === "light");
 
+const initialShowDocs = typeof window !== "undefined" && window.location.hash === "#docs";
+
 export const state = reactive({
   ready: false,
   setup: true,
@@ -19,7 +21,28 @@ export const state = reactive({
   unlocked: false,
   notice: "",
   theme: initialTheme as Theme,
+  showDocs: initialShowDocs,
 });
+
+export function openDocs(): void {
+  state.showDocs = true;
+  if (typeof window !== "undefined") {
+    window.location.hash = "docs";
+  }
+}
+
+export function closeDocs(): void {
+  state.showDocs = false;
+  if (typeof window !== "undefined" && window.location.hash === "#docs") {
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("hashchange", () => {
+    state.showDocs = window.location.hash === "#docs";
+  });
+}
 
 export function toggleTheme(): void {
   state.theme = state.theme === "dark" ? "light" : "dark";
