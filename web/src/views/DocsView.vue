@@ -284,8 +284,8 @@ function copySimCipher() {
           </button>
 
           <button class="btn btn-back" @click="closeDocs">
-            <i class="bi bi-arrow-left"></i>
-            <span>{{ state.unlocked ? "Kembali ke Vault" : "Kembali ke Login" }}</span>
+            <i class="bi" :class="state.unlocked ? 'bi-arrow-left' : 'bi-box-arrow-in-right'"></i>
+            <span>{{ state.unlocked ? "Kembali ke Vault" : "Login" }}</span>
           </button>
         </div>
       </div>
@@ -434,7 +434,7 @@ function copySimCipher() {
           <div class="cta-buttons">
             <button class="btn btn-primary" @click="closeDocs">
               <i class="bi bi-box-arrow-in-right"></i>
-              <span>{{ state.unlocked ? "Masuk ke Vault" : "Mulai Login" }}</span>
+              <span>{{ state.unlocked ? "Masuk ke Vault" : "Login" }}</span>
             </button>
             <button class="btn btn-secondary" @click="activeTab = 'workflow'">
               <i class="bi bi-diagram-3"></i>
