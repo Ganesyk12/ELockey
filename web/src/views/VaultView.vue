@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { api, type EntryDetail, type EntryMeta } from "../api";
 import { state, toggleTheme, openDocs } from "../state";
+import {
+  generatePassword,
+  calculateStrength,
+  type PasswordStrength,
+} from "../utils/generator";
 
 const entries = ref<EntryMeta[]>([]);
 const detail = ref<EntryDetail | null>(null);
@@ -11,6 +16,7 @@ const error = ref("");
 const busy = ref(false);
 const search = ref("");
 const toast = ref("");
+const modalShowPassword = ref(false);
 
 const modal = reactive({
   open: false,
@@ -21,6 +27,79 @@ const modal = reactive({
   password: "",
   notes: "",
 });
+
+const genModal = reactive({
+  open: false,
+  password: "",
+  mode: "chars" as "chars" | "passphrase",
+  length: 18,
+  uppercase: true,
+  lowercase: true,
+  numbers: true,
+  symbols: true,
+  avoidAmbiguous: false,
+  wordCount: 4,
+  separator: "-",
+  capitalize: true,
+  includeNumber: true,
+  showPlaintext: true,
+});
+
+const genStrength = computed<PasswordStrength>(() =>
+  calculateStrength(genModal.password)
+);
+
+function refreshGenerator() {
+  genModal.password = generatePassword({
+    mode: genModal.mode,
+    length: Number(genModal.length),
+    uppercase: genModal.uppercase,
+    lowercase: genModal.lowercase,
+    numbers: genModal.numbers,
+    symbols: genModal.symbols,
+    avoidAmbiguous: genModal.avoidAmbiguous,
+    wordCount: Number(genModal.wordCount),
+    separator: genModal.separator,
+    capitalize: genModal.capitalize,
+    includeNumber: genModal.includeNumber,
+  });
+}
+
+function openStandaloneGenerator() {
+  genModal.open = true;
+  refreshGenerator();
+}
+
+function applyGeneratedPassword() {
+  if (modal.open) {
+    modal.password = genModal.password;
+    modalShowPassword.value = true;
+    genModal.open = false;
+    showToast("Kata sandi diterapkan ke form!");
+  } else {
+    copy(genModal.password, "Kata sandi");
+    genModal.open = false;
+  }
+}
+
+watch(
+  () => [
+    genModal.mode,
+    genModal.length,
+    genModal.uppercase,
+    genModal.lowercase,
+    genModal.numbers,
+    genModal.symbols,
+    genModal.avoidAmbiguous,
+    genModal.wordCount,
+    genModal.separator,
+    genModal.capitalize,
+    genModal.includeNumber,
+  ],
+  () => {
+    refreshGenerator();
+  }
+);
 
 const confirm = reactive({
   open: false,
@@ -116,6 +195,7 @@ async function copy(text: string | undefined | null, label: string) {
 }
 
 function openAdd() {
+  modalShowPassword.value = false;
   Object.assign(modal, {
     open: true, editing: false, id: "",
     appsource: "", username: "", password: "", notes: "",
@@ -124,6 +204,7 @@ function openAdd() {
 
 function openEdit() {
   if (!detail.value) return;
+  modalShowPassword.value = false;
   Object.assign(modal, {
     open: true, editing: true, id: detail.value.id,
     appsource: detail.value.appsource,
@@ -211,6 +292,14 @@ onMounted(load);
         <span class="vault-version-badge">v1.1.0</span>
       </div>
       <div class="vault-header-actions">
+        <button
+          class="icon-btn"
+          title="Generator Kata Sandi Unik"
+          aria-label="Generator Kata Sandi Unik"
+          @click="openStandaloneGenerator"
+        >
+          <i class="bi bi-key"></i>
+        </button>
         <button
           class="icon-btn"
           title="Panduan & Dokumentasi"
@@ -341,8 +430,35 @@ onMounted(load);
           <input id="m-user" v-model="modal.username" type="text" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label for="m-pass">Password</label>
-          <input id="m-pass" v-model="modal.password" type="password" autocomplete="off" />
+          <div class="form-label-row">
+            <label for="m-pass">Password</label>
+            <button
+              type="button"
+              class="gen-trigger-btn"
+              title="Buat kata sandi unik & kuat otomatis"
+              @click="openStandaloneGenerator"
+            >
+              <i class="bi bi-magic"></i> Buat Sandi Kuat
+            </button>
+          </div>
+          <div class="input-wrap">
+            <input
+              id="m-pass"
+              v-model="modal.password"
+              :type="modalShowPassword ? 'text' : 'password'"
+              autocomplete="off"
+              placeholder="Ketik atau buat otomatis"
+            />
+            <button
+              type="button"
+              class="toggle-vis"
+              :aria-label="modalShowPassword ? 'Hide password' : 'Show password'"
+              :title="modalShowPassword ? 'Hide password' : 'Show password'"
+              @click="modalShowPassword = !modalShowPassword"
+            >
+              <i class="bi" :class="modalShowPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label for="m-notes">Notes</label>
@@ -356,6 +472,206 @@ onMounted(load);
           <button class="btn btn-primary" :disabled="busy" @click="save">
             <i class="bi bi-check-lg"></i>
             {{ busy ? "Saving..." : "Save" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
+
+  <!-- Password Generator Modal -->
+  <Teleport to="body">
+    <div v-if="genModal.open" class="modal-backdrop gen-backdrop" @click.self="genModal.open = false">
+      <div class="modal-sheet gen-modal-card">
+        <div class="modal-handle"></div>
+        <div class="gen-header">
+          <div class="gen-title">
+            <i class="bi bi-key-fill text-accent"></i>
+            <h2>Generator Kata Sandi Unik</h2>
+          </div>
+          <button class="icon-btn-close" title="Tutup" @click="genModal.open = false">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <!-- Output Display Box -->
+        <div class="gen-output-box">
+          <div class="gen-password-text" :class="{ masked: !genModal.showPlaintext }">
+            {{ genModal.showPlaintext ? genModal.password : "••••••••••••••••••" }}
+          </div>
+          <div class="gen-output-actions">
+            <button
+              type="button"
+              class="icon-btn-sm"
+              :title="genModal.showPlaintext ? 'Sembunyikan' : 'Tampilkan'"
+              @click="genModal.showPlaintext = !genModal.showPlaintext"
+            >
+              <i class="bi" :class="genModal.showPlaintext ? 'bi-eye-slash' : 'bi-eye'"></i>
+            </button>
+            <button
+              type="button"
+              class="icon-btn-sm"
+              title="Acak Ulang"
+              @click="refreshGenerator"
+            >
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button
+              type="button"
+              class="icon-btn-sm"
+              title="Salin ke Clipboard"
+              @click="copy(genModal.password, 'Kata sandi')"
+            >
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Strength Meter Bar -->
+        <div class="gen-strength-meter">
+          <div class="gen-strength-track">
+            <div
+              class="gen-strength-fill"
+              :style="{ width: `${genStrength.percent}%`, background: genStrength.color }"
+            ></div>
+          </div>
+          <div class="gen-strength-label" :style="{ color: genStrength.color }">
+            <i class="bi bi-shield-check"></i>
+            <span>{{ genStrength.label }}</span>
+          </div>
+        </div>
+
+        <!-- Mode Tabs -->
+        <div class="gen-mode-tabs">
+          <button
+            type="button"
+            class="gen-mode-tab"
+            :class="{ active: genModal.mode === 'chars' }"
+            @click="genModal.mode = 'chars'"
+          >
+            <i class="bi bi-shuffle"></i> Karakter Acak
+          </button>
+          <button
+            type="button"
+            class="gen-mode-tab"
+            :class="{ active: genModal.mode === 'passphrase' }"
+            @click="genModal.mode = 'passphrase'"
+          >
+            <i class="bi bi-chat-square-quote"></i> Passphrase Mudah Diingat
+          </button>
+        </div>
+
+        <!-- Mode 1: Random Characters -->
+        <div v-if="genModal.mode === 'chars'" class="gen-options-panel">
+          <div class="gen-slider-row">
+            <div class="gen-slider-header">
+              <span>Panjang Karakter</span>
+              <span class="gen-counter">{{ genModal.length }}</span>
+            </div>
+            <input
+              v-model="genModal.length"
+              type="range"
+              min="8"
+              max="64"
+              class="gen-range-slider"
+            />
+          </div>
+
+          <div class="gen-checkbox-grid">
+            <label class="gen-check-item">
+              <input v-model="genModal.uppercase" type="checkbox" />
+              <span>Huruf Besar (A-Z)</span>
+            </label>
+            <label class="gen-check-item">
+              <input v-model="genModal.lowercase" type="checkbox" />
+              <span>Huruf Kecil (a-z)</span>
+            </label>
+            <label class="gen-check-item">
+              <input v-model="genModal.numbers" type="checkbox" />
+              <span>Angka (0-9)</span>
+            </label>
+            <label class="gen-check-item">
+              <input v-model="genModal.symbols" type="checkbox" />
+              <span>Simbol (!@#$)</span>
+            </label>
+            <label class="gen-check-item full-span">
+              <input v-model="genModal.avoidAmbiguous" type="checkbox" />
+              <span>Hindari Karakter Serupa (0, O, 1, l, I)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Mode 2: Passphrase (Diceware) -->
+        <div v-else class="gen-options-panel">
+          <div class="gen-slider-row">
+            <div class="gen-slider-header">
+              <span>Jumlah Kata</span>
+              <span class="gen-counter">{{ genModal.wordCount }} kata</span>
+            </div>
+            <input
+              v-model="genModal.wordCount"
+              type="range"
+              min="3"
+              max="8"
+              class="gen-range-slider"
+            />
+          </div>
+
+          <div class="gen-separator-row">
+            <span>Tanda Pemisah</span>
+            <div class="gen-sep-pills">
+              <button
+                type="button"
+                class="sep-btn"
+                :class="{ active: genModal.separator === '-' }"
+                @click="genModal.separator = '-'"
+              >
+                Hubung ( - )
+              </button>
+              <button
+                type="button"
+                class="sep-btn"
+                :class="{ active: genModal.separator === '_' }"
+                @click="genModal.separator = '_'"
+              >
+                Garis Bawah ( _ )
+              </button>
+              <button
+                type="button"
+                class="sep-btn"
+                :class="{ active: genModal.separator === '.' }"
+                @click="genModal.separator = '.'"
+              >
+                Titik ( . )
+              </button>
+              <button
+                type="button"
+                class="sep-btn"
+                :class="{ active: genModal.separator === ' ' }"
+                @click="genModal.separator = ' '"
+              >
+                Spasi
+              </button>
+            </div>
+          </div>
+
+          <div class="gen-checkbox-grid">
+            <label class="gen-check-item">
+              <input v-model="genModal.capitalize" type="checkbox" />
+              <span>Kapitalkan Setiap Kata</span>
+            </label>
+            <label class="gen-check-item">
+              <input v-model="genModal.includeNumber" type="checkbox" />
+              <span>Sertakan Angka Acak</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions gen-modal-actions">
+          <button class="btn btn-secondary" @click="genModal.open = false">Tutup</button>
+          <button class="btn btn-primary" @click="applyGeneratedPassword">
+            <i class="bi" :class="modal.open ? 'bi-check2-circle' : 'bi-clipboard-check'"></i>
+            {{ modal.open ? "Gunakan Kata Sandi" : "Salin Kata Sandi" }}
           </button>
         </div>
       </div>

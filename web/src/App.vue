@@ -43,9 +43,6 @@ onMounted(async () => {
     <div v-if="!state.ready" class="auth-page">
       <div class="loading">Loading&hellip;</div>
     </div>
-    <div v-else-if="!state.setup" class="auth-page">
-      <SetupView />
-    </div>
     <div v-else-if="!state.token" class="auth-page">
       <LoginView />
     </div>

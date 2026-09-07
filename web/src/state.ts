@@ -4,7 +4,7 @@ const TOKEN_KEY = "elockey.token";
 const THEME_KEY = "elockey.theme";
 
 type Theme = "dark" | "light";
-export type DocsTab = "overview" | "features" | "workflow" | "security" | "simulator" | "faq" | "changelog";
+export type DocsTab = "overview" | "features" | "workflow" | "security" | "faq" | "changelog";
 
 const initialTheme: Theme =
   localStorage.getItem(THEME_KEY) === "light"

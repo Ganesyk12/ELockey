@@ -24,11 +24,13 @@ export function createApp(): express.Express {
   );
   app.use(express.json({ limit: "64kb" }));
 
+  const isDev = process.env.NODE_ENV !== "production";
+
   app.use(
     "/api",
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      limit: 300,
+      limit: isDev ? 1000 : 300,
       standardHeaders: true,
       legacyHeaders: false,
     })
@@ -37,7 +39,8 @@ export function createApp(): express.Express {
     ["/api/register", "/api/login", "/api/unlock"],
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      limit: 10,
+      limit: isDev ? 100 : 30,
+      skipSuccessfulRequests: true,
       standardHeaders: true,
       legacyHeaders: false,
       message: { error: "Too many attempts. Try again later." },

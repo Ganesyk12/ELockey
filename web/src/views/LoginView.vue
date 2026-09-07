@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 import { setToken, state, openDocs } from "../state";
 
 const mode = ref<"login" | "register">("login");
@@ -20,13 +20,31 @@ async function submit() {
   try {
     if (mode.value === "register") {
       await api.register(username.value.trim(), password.value);
-      state.notice = `Account created. Set your master key next.`;
     }
     const { token } = await api.login(username.value.trim(), password.value);
     setToken(token);
-    state.unlocked = false;
+
+    // Auto-unlock vault with the entered password/master-key
+    try {
+      await api.unlock(password.value);
+      state.unlocked = true;
+    } catch (unlockErr) {
+      if (unlockErr instanceof ApiError && unlockErr.status === 400) {
+        await api.setKey(password.value);
+        await api.unlock(password.value);
+        state.unlocked = true;
+      } else {
+        state.unlocked = false;
+      }
+    }
+    state.setup = true;
+    state.notice = "";
   } catch (e) {
-    error.value = e instanceof Error ? e.message : String(e);
+    if (e instanceof ApiError && e.status === 401 && !state.setup) {
+      error.value = "Belum ada akun di brankas. Silakan klik 'Create an account' untuk mendaftar.";
+    } else {
+      error.value = e instanceof Error ? e.message : String(e);
+    }
   } finally {
     busy.value = false;
   }
