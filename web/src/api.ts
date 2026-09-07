@@ -63,5 +63,7 @@ export const api = {
   get: (id: string) => request<EntryDetail>("GET", `/entries/${id}`),
   create: (input: EntryInput) => request<{ ok: boolean; id: string }>("POST", "/entries", input),
   update: (id: string, input: EntryInput) => request<{ ok: boolean }>("PUT", `/entries/${id}`, input),
+  updateKey: (currentMasterKey: string, newMasterKey: string) =>
+    request<{ ok: boolean; message?: string }>("POST", "/updateKey", { currentMasterKey, newMasterKey }),
   remove: (id: string) => request<{ ok: boolean }>("DELETE", `/entries/${id}`),
 };

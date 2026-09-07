@@ -30,5 +30,6 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
     "resolveJsonModule": true
-  }
+  },
+  "exclude": ["web", "node_modules"]
 }

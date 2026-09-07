@@ -1,7 +1,14 @@
 import { randomBytes } from "node:crypto";
 import { Router } from "express";
 import { db } from "../prisma/db";
-import { hashMasterKey, verifyMasterKey } from "../config/crypto";
+import {
+  decrypt,
+  encrypt,
+  hashMasterKey,
+  payloadToStored,
+  storedToPayload,
+  verifyMasterKey,
+} from "../config/crypto";
 import {
   createSession,
   setMasterKey,
@@ -93,6 +100,119 @@ authRouter.post("/unlock", requireLogin, async (req, res) => {
   const token = extractToken(req)!;
   setMasterKey(token, masterKey);
   res.json({ ok: true });
+});
+
+authRouter.post("/updateKey", requireLogin, async (req, res) => {
+  const { currentMasterKey, newMasterKey } = req.body as {
+    currentMasterKey?: string;
+    newMasterKey?: string;
+  };
+  if (!currentMasterKey || !newMasterKey) {
+    res.status(400).json({ error: "currentMasterKey and newMasterKey are required." });
+    return;
+  }
+  if (currentMasterKey === newMasterKey) {
+    res.status(400).json({ error: "Master key baru harus berbeda dari master key saat ini." });
+    return;
+  }
+
+  const user = await db.user.findUnique({ where: { id: req.userId } });
+  if (!user) {
+    res.status(404).json({ error: "User not found." });
+    return;
+  }
+
+  // Verify current master key (check masterHash if set, otherwise check password)
+  let isCurrentKeyValid = false;
+  if (user.masterHash && user.masterSalt) {
+    isCurrentKeyValid = verifyMasterKey(currentMasterKey, { salt: user.masterSalt, hash: user.masterHash });
+  } else {
+    const [pSalt, pHash] = user.password.split(".");
+    if (pSalt && pHash) {
+      isCurrentKeyValid = verifyMasterKey(currentMasterKey, { salt: pSalt, hash: pHash });
+    }
+  }
+
+  if (!isCurrentKeyValid) {
+    res.status(401).json({ error: "Master key saat ini tidak valid / salah." });
+    return;
+  }
+
+  // Fetch all vaults and their fields for this user
+  const vaults = await db.vault.findMany({
+    where: { userId: req.userId },
+    include: { fields: true },
+  });
+
+  interface ReencryptedField {
+    id: string;
+    salt: string;
+    iv: string;
+    tag: string;
+    data: string;
+  }
+
+  const reencryptedFields: ReencryptedField[] = [];
+
+  for (const vault of vaults) {
+    for (const field of vault.fields) {
+      let plaintext: string;
+      try {
+        plaintext = decrypt(
+          storedToPayload(payloadToStored({ salt: field.salt, iv: field.iv, tag: field.tag, data: field.data })),
+          currentMasterKey
+        );
+      } catch {
+        res.status(400).json({
+          error: "Gagal mendekripsi data vault lama dengan master key saat ini.",
+        });
+        return;
+      }
+      const enc = encrypt(plaintext, newMasterKey);
+      reencryptedFields.push({
+        id: field.id,
+        salt: enc.salt,
+        iv: enc.iv,
+        tag: enc.tag,
+        data: enc.data,
+      });
+    }
+  }
+
+  // Compute new master key hash and login password hash
+  const { salt: newMasterSalt, hash: newMasterHash } = hashMasterKey(newMasterKey);
+  const { salt: newLoginSalt, hash: newLoginHash } = hashMasterKey(newMasterKey);
+
+  await db.$transaction(async (tx) => {
+    // 1. Update all re-encrypted fields
+    for (const field of reencryptedFields) {
+      await tx.vaultField.update({
+        where: { id: field.id },
+        data: {
+          salt: field.salt,
+          iv: field.iv,
+          tag: field.tag,
+          data: field.data,
+        },
+      });
+    }
+
+    // 2. Update user master key and password in DB
+    await tx.user.update({
+      where: { id: req.userId },
+      data: {
+        password: [newLoginSalt, newLoginHash].join("."),
+        masterSalt: newMasterSalt,
+        masterHash: newMasterHash,
+      },
+    });
+  });
+
+  // 3. Update session master key in memory
+  const token = extractToken(req)!;
+  setMasterKey(token, newMasterKey);
+
+  res.json({ ok: true, message: "Master key berhasil diperbarui & seluruh data di-enkripsi ulang." });
 });
 
 authRouter.post("/lock", requireLogin, (req, res) => {
