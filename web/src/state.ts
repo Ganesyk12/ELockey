@@ -4,6 +4,7 @@ const TOKEN_KEY = "elockey.token";
 const THEME_KEY = "elockey.theme";
 
 type Theme = "dark" | "light";
+export type DocsTab = "overview" | "features" | "workflow" | "security" | "simulator" | "faq" | "changelog";
 
 const initialTheme: Theme =
   localStorage.getItem(THEME_KEY) === "light"
@@ -12,7 +13,16 @@ const initialTheme: Theme =
 
 document.documentElement.classList.toggle("light", initialTheme === "light");
 
-const initialShowDocs = typeof window !== "undefined" && window.location.hash === "#docs";
+function getInitialTab(): DocsTab {
+  if (typeof window !== "undefined" && window.location.hash === "#changelog") {
+    return "changelog";
+  }
+  return "overview";
+}
+
+const initialShowDocs =
+  typeof window !== "undefined" &&
+  (window.location.hash === "#docs" || window.location.hash === "#changelog");
 
 export const state = reactive({
   ready: false,
@@ -22,25 +32,35 @@ export const state = reactive({
   notice: "",
   theme: initialTheme as Theme,
   showDocs: initialShowDocs,
+  docsTab: getInitialTab() as DocsTab,
 });
 
-export function openDocs(): void {
+export function openDocs(tab: DocsTab = "overview"): void {
+  state.docsTab = tab;
   state.showDocs = true;
   if (typeof window !== "undefined") {
-    window.location.hash = "docs";
+    window.location.hash = tab === "changelog" ? "changelog" : "docs";
   }
 }
 
 export function closeDocs(): void {
   state.showDocs = false;
-  if (typeof window !== "undefined" && window.location.hash === "#docs") {
+  if (typeof window !== "undefined" && (window.location.hash === "#docs" || window.location.hash === "#changelog")) {
     history.replaceState(null, "", window.location.pathname + window.location.search);
   }
 }
 
 if (typeof window !== "undefined") {
   window.addEventListener("hashchange", () => {
-    state.showDocs = window.location.hash === "#docs";
+    if (window.location.hash === "#changelog") {
+      state.showDocs = true;
+      state.docsTab = "changelog";
+    } else if (window.location.hash === "#docs") {
+      state.showDocs = true;
+      if (state.docsTab === "changelog") state.docsTab = "overview";
+    } else {
+      state.showDocs = false;
+    }
   });
 }
 

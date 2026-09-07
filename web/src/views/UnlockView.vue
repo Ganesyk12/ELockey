@@ -71,7 +71,7 @@ async function logout() {
       <span>atau</span>
     </div>
 
-    <button type="button" class="btn btn-secondary docs-btn" @click="openDocs">
+    <button type="button" class="btn btn-secondary docs-btn" @click="openDocs('overview')">
       <i class="bi bi-book"></i> Dokumentasi & Panduan
     </button>
   </div>

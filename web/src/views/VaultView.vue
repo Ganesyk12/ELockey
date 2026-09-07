@@ -201,12 +201,22 @@ onMounted(load);
 <template>
   <div class="vault">
     <header class="vault-header">
-      <div class="vault-title">
+      <div
+        class="vault-title"
+        title="ELockey v1.1.0 · Klik untuk melihat Changelog"
+        @click="openDocs('changelog')"
+      >
         <i class="bi bi-shield-lock vault-logo"></i>
         <h1>ELockey</h1>
+        <span class="vault-version-badge">v1.1.0</span>
       </div>
       <div class="vault-header-actions">
-        <button class="icon-btn" title="Panduan & Dokumentasi" aria-label="Panduan & Dokumentasi" @click="openDocs">
+        <button
+          class="icon-btn"
+          title="Panduan & Dokumentasi"
+          aria-label="Panduan & Dokumentasi"
+          @click="openDocs('overview')"
+        >
           <i class="bi bi-book"></i>
         </button>
         <button class="icon-btn" title="Toggle theme" aria-label="Toggle theme" @click="toggleTheme">

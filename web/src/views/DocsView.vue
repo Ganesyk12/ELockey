@@ -1,9 +1,98 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { closeDocs, state, toggleTheme } from "../state";
+import { closeDocs, state, toggleTheme, type DocsTab } from "../state";
+import { releases, type ChangeType } from "../data/changelog";
 
 // Active Tab
-const activeTab = ref<"overview" | "features" | "workflow" | "security" | "simulator" | "faq">("overview");
+const activeTab = ref<DocsTab>(state.docsTab || "overview");
+
+watch(
+  () => state.docsTab,
+  (newTab) => {
+    if (newTab) activeTab.value = newTab;
+  }
+);
+watch(activeTab, (newTab) => {
+  state.docsTab = newTab;
+  if (typeof window !== "undefined") {
+    window.location.hash = newTab === "changelog" ? "changelog" : "docs";
+  }
+});
+
+// Changelog State & Filters
+const changelogFilter = ref<string>("all");
+const changelogSearch = ref("");
+
+function getChangeTypeLabel(type: ChangeType): string {
+  switch (type) {
+    case "feat":
+      return "Fitur Baru";
+    case "improve":
+      return "Peningkatan";
+    case "fix":
+      return "Perbaikan Bug";
+    case "security":
+      return "Keamanan";
+    case "docs":
+      return "Dokumentasi";
+    default:
+      return type;
+  }
+}
+
+function getChangeTypeIcon(type: ChangeType): string {
+  switch (type) {
+    case "feat":
+      return "bi-plus-circle-fill";
+    case "improve":
+      return "bi-lightning-charge-fill";
+    case "fix":
+      return "bi-wrench-adjustable-circle-fill";
+    case "security":
+      return "bi-shield-check-fill";
+    case "docs":
+      return "bi-file-earmark-text-fill";
+    default:
+      return "bi-dot";
+  }
+}
+
+const totalChangesCount = computed(() => {
+  return releases.reduce((acc, rel) => acc + rel.changes.length, 0);
+});
+
+const filteredReleases = computed(() => {
+  const filter = changelogFilter.value;
+  const q = changelogSearch.value.trim().toLowerCase();
+
+  return releases
+    .map((rel) => {
+      let changes = rel.changes;
+
+      if (filter !== "all") {
+        changes = changes.filter((c) => c.type === filter);
+      }
+
+      if (q) {
+        changes = changes.filter(
+          (c) =>
+            c.title.toLowerCase().includes(q) ||
+            (c.description && c.description.toLowerCase().includes(q)) ||
+            (c.scope && c.scope.toLowerCase().includes(q))
+        );
+      }
+
+      const versionMatch = rel.version.toLowerCase().includes(q);
+      const summaryMatch = rel.summary.toLowerCase().includes(q);
+
+      return {
+        ...rel,
+        changes,
+        matches: changes.length > 0 || ((versionMatch || summaryMatch) && filter === "all"),
+      };
+    })
+    .filter((rel) => rel.changes.length > 0 || rel.matches);
+});
 
 // Search Filter
 const searchQuery = ref("");
@@ -269,7 +358,7 @@ function copySimCipher() {
           </div>
           <div class="brand-text">
             <span class="brand-name">ELockey</span>
-            <span class="brand-version">Dokumentasi v1.0</span>
+            <span class="brand-version">Dokumentasi</span>
           </div>
         </div>
 
@@ -339,6 +428,15 @@ function copySimCipher() {
         >
           <i class="bi bi-question-circle"></i>
           <span>Tanya Jawab (FAQ)</span>
+        </button>
+        <button
+          class="tab-pill"
+          :class="{ active: activeTab === 'changelog' }"
+          @click="activeTab = 'changelog'"
+        >
+          <i class="bi bi-clock-history"></i>
+          <span>Changelog</span>
+          <span class="tab-badge-new">v1.1.0</span>
         </button>
       </nav>
     </header>
@@ -913,6 +1011,235 @@ function copySimCipher() {
               <p>{{ item.a }}</p>
               <div class="faq-tags">
                 <span v-for="tag in item.tags" :key="tag" class="tag-badge">#{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. CHANGELOG TAB -->
+      <section v-if="activeTab === 'changelog'" class="tab-content fade-in">
+        <div class="section-header">
+          <div class="section-badge-chip">
+            <i class="bi bi-clock-history"></i> Riwayat Rilis & Pembaruan
+          </div>
+          <h2 class="section-title">Changelog ELockey</h2>
+          <p class="section-subtitle">
+            Transparansi catatan pembaruan, fitur baru, peningkatan performa, dan perbaikan keamanan di setiap rilis.
+          </p>
+        </div>
+
+        <!-- Quick Stats Banner -->
+        <div class="changelog-stats-banner">
+          <div class="cl-stat-card">
+            <div class="cl-stat-icon"><i class="bi bi-tag-fill text-accent"></i></div>
+            <div class="cl-stat-info">
+              <span class="cl-stat-val">v1.1.0</span>
+              <span class="cl-stat-lbl">Versi Saat Ini</span>
+            </div>
+          </div>
+          <div class="cl-stat-card">
+            <div class="cl-stat-icon"><i class="bi bi-collection-fill text-success"></i></div>
+            <div class="cl-stat-info">
+              <span class="cl-stat-val">{{ releases.length }} Rilis</span>
+              <span class="cl-stat-lbl">Total Versi</span>
+            </div>
+          </div>
+          <div class="cl-stat-card">
+            <div class="cl-stat-icon"><i class="bi bi-check2-circle text-warning"></i></div>
+            <div class="cl-stat-info">
+              <span class="cl-stat-val">{{ totalChangesCount }} Perubahan</span>
+              <span class="cl-stat-lbl">Fitur & Patch</span>
+            </div>
+          </div>
+          <div class="cl-stat-card">
+            <div class="cl-stat-icon"><i class="bi bi-shield-check text-accent"></i></div>
+            <div class="cl-stat-info">
+              <span class="cl-stat-val">Zero-Knowledge</span>
+              <span class="cl-stat-lbl">Arsitektur Inti</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search & Category Filters -->
+        <div class="cl-controls">
+          <div class="search-box cl-search">
+            <i class="bi bi-search search-icon"></i>
+            <input
+              v-model="changelogSearch"
+              type="text"
+              placeholder="Cari perubahan, fitur, perbaikan (contoh: simulator, password, docker, crypto)..."
+            />
+            <button
+              v-if="changelogSearch"
+              class="clear-search-btn"
+              title="Hapus filter pencarian"
+              @click="changelogSearch = ''"
+            >
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          </div>
+
+          <div class="cl-filter-chips">
+            <button
+              class="cl-chip"
+              :class="{ active: changelogFilter === 'all' }"
+              @click="changelogFilter = 'all'"
+            >
+              Semua ({{ totalChangesCount }})
+            </button>
+            <button
+              class="cl-chip chip-feat"
+              :class="{ active: changelogFilter === 'feat' }"
+              @click="changelogFilter = 'feat'"
+            >
+              <i class="bi bi-plus-circle-fill"></i> Fitur Baru
+            </button>
+            <button
+              class="cl-chip chip-improve"
+              :class="{ active: changelogFilter === 'improve' }"
+              @click="changelogFilter = 'improve'"
+            >
+              <i class="bi bi-lightning-charge-fill"></i> Peningkatan
+            </button>
+            <button
+              class="cl-chip chip-fix"
+              :class="{ active: changelogFilter === 'fix' }"
+              @click="changelogFilter = 'fix'"
+            >
+              <i class="bi bi-wrench-adjustable-circle-fill"></i> Bug Fix
+            </button>
+            <button
+              class="cl-chip chip-security"
+              :class="{ active: changelogFilter === 'security' }"
+              @click="changelogFilter = 'security'"
+            >
+              <i class="bi bi-shield-check-fill"></i> Keamanan
+            </button>
+            <button
+              class="cl-chip chip-docs"
+              :class="{ active: changelogFilter === 'docs' }"
+              @click="changelogFilter = 'docs'"
+            >
+              <i class="bi bi-file-earmark-text-fill"></i> Dokumentasi
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty search result -->
+        <div v-if="filteredReleases.length === 0" class="empty-faq">
+          <i class="bi bi-search"></i>
+          <p>Tidak ada catatan perubahan yang cocok dengan "{{ changelogSearch }}".</p>
+          <button
+            class="btn btn-secondary"
+            style="margin-top: 12px"
+            @click="changelogSearch = ''; changelogFilter = 'all'"
+          >
+            Reset Filter
+          </button>
+        </div>
+
+        <!-- Release Timeline -->
+        <div v-else class="cl-timeline">
+          <div
+            v-for="rel in filteredReleases"
+            :key="rel.version"
+            class="cl-release-row"
+          >
+            <div class="cl-marker-col">
+              <div class="cl-dot" :class="`dot-${rel.badgeType}`">
+                <i class="bi bi-tag-fill"></i>
+              </div>
+              <div class="cl-line"></div>
+            </div>
+
+            <div class="cl-card">
+              <div class="cl-card-header">
+                <div class="cl-version-group">
+                  <h3 class="cl-version-title">v{{ rel.version }}</h3>
+                  <span class="cl-badge" :class="`badge-${rel.badgeType}`">
+                    {{ rel.tag }}
+                  </span>
+                </div>
+                <div class="cl-date">
+                  <i class="bi bi-calendar3"></i> {{ rel.date }}
+                </div>
+              </div>
+
+              <p class="cl-summary">{{ rel.summary }}</p>
+
+              <div v-if="rel.highlights && rel.highlights.length" class="cl-highlights">
+                <span
+                  v-for="hl in rel.highlights"
+                  :key="hl"
+                  class="cl-hl-pill"
+                >
+                  <i class="bi bi-check2"></i> {{ hl }}
+                </span>
+              </div>
+
+              <div class="cl-changes-list">
+                <div
+                  v-for="(c, cIdx) in rel.changes"
+                  :key="cIdx"
+                  class="cl-change-item"
+                  :class="`type-${c.type}`"
+                >
+                  <div class="cl-change-icon">
+                    <i class="bi" :class="getChangeTypeIcon(c.type)"></i>
+                  </div>
+                  <div class="cl-change-body">
+                    <div class="cl-change-header">
+                      <span class="cl-type-tag" :class="`tag-${c.type}`">
+                        {{ getChangeTypeLabel(c.type) }}
+                      </span>
+                      <span v-if="c.scope" class="cl-scope">[{{ c.scope }}]</span>
+                      <span class="cl-title">{{ c.title }}</span>
+                    </div>
+                    <p v-if="c.description" class="cl-desc">{{ c.description }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase 2 Roadmap Box -->
+        <div class="cl-roadmap-banner">
+          <div class="cl-roadmap-header">
+            <div class="roadmap-badge-chip">
+              <i class="bi bi-rocket-takeoff-fill"></i> Roadmap Rencana Phase 2
+            </div>
+            <h3>Menuju ELockey Phase 2</h3>
+            <p>Fitur-fitur utama yang sedang dalam tahap perancangan untuk rilis berikutnya:</p>
+          </div>
+          <div class="cl-roadmap-grid">
+            <div class="cl-roadmap-item">
+              <div class="cl-rm-icon"><i class="bi bi-key-fill text-accent"></i></div>
+              <div class="cl-rm-text">
+                <strong>Password Generator Interaktif</strong>
+                <span>Generator acak kustom & passphrase Diceware yang mudah dihafal.</span>
+              </div>
+            </div>
+            <div class="cl-roadmap-item">
+              <div class="cl-rm-icon"><i class="bi bi-shield-lock-fill text-success"></i></div>
+              <div class="cl-rm-text">
+                <strong>Built-in 2FA / TOTP Authenticator</strong>
+                <span>Kode OTP 6-digit dengan live timer 30s langsung di tiap entri.</span>
+              </div>
+            </div>
+            <div class="cl-roadmap-item">
+              <div class="cl-rm-icon"><i class="bi bi-file-earmark-arrow-down-fill text-warning"></i></div>
+              <div class="cl-rm-text">
+                <strong>Import & Export Kredensial</strong>
+                <span>Dukungan migrasi CSV Bitwarden/Chrome & backup JSON terenkripsi.</span>
+              </div>
+            </div>
+            <div class="cl-roadmap-item">
+              <div class="cl-rm-icon"><i class="bi bi-heart-pulse-fill text-danger"></i></div>
+              <div class="cl-rm-text">
+                <strong>Vault Health & Leak Audit</strong>
+                <span>Deteksi otomatis password lemah, duplikat, dan bocor (HIBP).</span>
               </div>
             </div>
           </div>
@@ -1939,6 +2266,470 @@ function copySimCipher() {
   color: var(--text-secondary);
   border-top: 1px solid var(--border);
   padding-top: 16px;
+}
+
+/* ── Changelog View Styles ── */
+.brand-version-btn {
+  cursor: pointer;
+  background: var(--surface-hover);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+.brand-version-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.tab-badge-new {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.changelog-stats-banner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .changelog-stats-banner {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .changelog-stats-banner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cl-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cl-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.cl-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.cl-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cl-stat-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cl-stat-lbl {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.cl-controls {
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cl-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search-btn:hover {
+  color: var(--text);
+}
+
+.cl-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cl-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.cl-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border-hover, var(--border));
+}
+
+.cl-chip.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.cl-chip.chip-feat.active { background: #10b981; border-color: #10b981; }
+.cl-chip.chip-improve.active { background: #3b82f6; border-color: #3b82f6; }
+.cl-chip.chip-fix.active { background: #f59e0b; border-color: #f59e0b; }
+.cl-chip.chip-security.active { background: #ef4444; border-color: #ef4444; }
+.cl-chip.chip-docs.active { background: #8b5cf6; border-color: #8b5cf6; }
+
+/* Timeline Container */
+.cl-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  margin-bottom: 40px;
+}
+
+.cl-release-row {
+  display: flex;
+  gap: 20px;
+  position: relative;
+}
+
+.cl-marker-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 32px;
+}
+
+.cl-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  z-index: 2;
+  box-shadow: 0 0 0 4px var(--bg);
+}
+
+.dot-primary { background: var(--accent); color: #fff; }
+.dot-warning { background: #f59e0b; color: #fff; }
+.dot-success { background: #10b981; color: #fff; }
+.dot-info { background: #8b5cf6; color: #fff; }
+
+.cl-line {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+.cl-release-row:last-child .cl-line {
+  display: none;
+}
+
+.cl-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cl-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.cl-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cl-version-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cl-version-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.cl-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-primary { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+.badge-warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-success { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-info { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+.cl-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cl-summary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0 0 16px;
+}
+
+.cl-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.cl-hl-pill {
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-hover);
+  color: var(--text);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cl-hl-pill i {
+  color: var(--accent);
+}
+
+.cl-changes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cl-change-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg);
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cl-change-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+}
+
+.cl-change-icon {
+  font-size: 16px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.type-feat .cl-change-icon { color: #10b981; }
+.type-improve .cl-change-icon { color: #3b82f6; }
+.type-fix .cl-change-icon { color: #f59e0b; }
+.type-security .cl-change-icon { color: #ef4444; }
+.type-docs .cl-change-icon { color: #8b5cf6; }
+
+.cl-change-body {
+  flex: 1;
+}
+
+.cl-change-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.cl-type-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.tag-feat { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.tag-improve { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.tag-fix { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.tag-security { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.tag-docs { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+
+.cl-scope {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cl-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cl-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+/* Phase 2 Roadmap Teaser */
+.cl-roadmap-banner {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-top: 10px;
+}
+
+.roadmap-badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.cl-roadmap-header h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cl-roadmap-header p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.cl-roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .cl-roadmap-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cl-roadmap-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.cl-rm-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cl-rm-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cl-rm-text strong {
+  font-size: 14px;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cl-rm-text span {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 
 /* ── Utility Colors ── */
