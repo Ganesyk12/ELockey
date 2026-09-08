@@ -2,7 +2,7 @@
 
 🇮🇩 Bahasa Indonesia · [🇬🇧 English](./README.en.md)
 
-Rumah aman untuk semua akun & password. Setiap data vault terenkripsi end-to-end, sehingga hanya pemilik master key yang bisa membukanya. Server tidak pernah menyimpan atau membaca isi vault.
+Rumah aman untuk semua akun & password. Setiap data vault terenkripsi secara terotentikasi (AES-256-GCM) dengan arsitektur zero-plaintext storage. Database server tidak pernah menyimpan data mentah atau master key Anda.
 
 ![elockey flow](./docs/flow-animation.svg)
 

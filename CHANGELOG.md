@@ -52,9 +52,9 @@ dan proyek ini menerapkan [Semantic Versioning](https://semver.org/lang/id/).
 ## [1.0.0] - 2026-08-31
 
 ### Added
-- **Peluncuran MVP Phase 1 ELockey**: Brankas kredensial berarsitektur *Zero-Knowledge*.
+- **Peluncuran MVP Phase 1 ELockey**: Brankas kredensial berarsitektur *Zero-Plaintext Storage*.
 - **Enkripsi AES-256-GCM**: Setiap kredensial (username, password, notes) dienkripsi secara independen dengan kunci KDF `scrypt` serta salt & IV acak per-entry.
-- **Backend Bun & Express 5**: API backend berkinerja tinggi untuk registrasi, login, unlock sesi, dan operasi CRUD kredensial.
-- **Data Layer Prisma ORM 7 Classic**: Integrasi PostgreSQL dengan adapter `@prisma/adapter-pg` dan skema database relasional `User` -> `Vault` -> `VaultField`.
-- **Sistem Keamanan Berlapis**: Middleware keamanan menggunakan `helmet`, `cors`, dan `express-rate-limit` untuk proteksi brute force.
-- **Frontend SPA Vue 3**: Antarmuka web responsif dengan tema dinamis, pencarian cepat, dan salin satu klik ke clipboard.
+- **Backend RESTful API**: API backend untuk registrasi, login, unlock sesi terisolasi, dan operasi CRUD kredensial.
+- **Data Layer Database Relasional**: Integrasi PostgreSQL dengan skema relasional `User` -> `Vault` -> `VaultField`.
+- **Sistem Keamanan Berlapis**: Middleware keamanan menggunakan proteksi rate limiting, CORS, dan security headers untuk proteksi brute force.
+- **Frontend SPA & PWA**: Antarmuka web responsif dengan tema dinamis, pencarian cepat, salin satu klik ke clipboard, dan kesiapan PWA.

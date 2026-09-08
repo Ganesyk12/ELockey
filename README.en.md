@@ -2,7 +2,7 @@
 
 [🇮🇩 Bahasa Indonesia](./README.md) · 🇬🇧 English
 
-A secure home for all your accounts & passwords. Every vault entry is encrypted end-to-end, so only the master-key owner can open it. The server never stores or reads the vault contents.
+A secure home for all your accounts & passwords. Every vault entry is authenticated-encrypted (AES-256-GCM) with a zero-plaintext storage architecture. The database server never stores plaintext credentials or your master key.
 
 ![elockey flow](./docs/flow-animation.svg)
 

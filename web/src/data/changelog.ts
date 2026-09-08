@@ -79,7 +79,7 @@ export const releases: ReleaseItem[] = [
         scope: "Dokumentasi",
         title: "Penyempurnaan Diagram Arsitektur & FAQ",
         description:
-          "Penambahan penjelasan mendalam seputar zero-knowledge, scrypt KDF, dan mitigasi kehilangan master key.",
+          "Penambahan penjelasan mendalam seputar zero-plaintext database storage, scrypt KDF, dan mitigasi kehilangan master key.",
       },
     ],
   },
@@ -89,33 +89,33 @@ export const releases: ReleaseItem[] = [
     tag: "Maintenance",
     badgeType: "warning",
     summary:
-      "Pembaruan infrastruktur container Docker untuk menyertakan library OpenSSL, perbaikan label aksi pada antarmuka pengguna, dan penyesuaian aset flow diagram.",
+      "Pembaruan infrastruktur container untuk keandalan modul kriptografi, perbaikan label aksi pada antarmuka pengguna, dan penyesuaian aset flow diagram.",
     highlights: [
-      "OpenSSL Runtime Fix",
-      "Docker Image Hardening",
+      "Crypto Runtime Fix",
+      "Container Hardening",
       "UX Label Polish",
     ],
     changes: [
       {
         type: "fix",
-        scope: "Docker",
-        title: "Dukungan OpenSSL pada Base Image Bun",
+        scope: "Runtime",
+        title: "Peningkatan Stabilitas Modul Kriptografi",
         description:
-          "Memastikan seluruh modul kriptografi dan koneksi TLS PostgreSQL berjalan stabil di lingkungan containerized.",
+          "Memastikan seluruh modul kriptografi dan koneksi TLS database berjalan stabil dan terisolasi di lingkungan container.",
       },
       {
         type: "improve",
         scope: "Navigasi",
         title: "Perbaikan Kejelasan Ikon dan Label Tombol",
         description:
-          "Memperjelas aksi Lock, Logout, dan Pengaturan agar tidak membingungkan pengguna baru.",
+          "Memperjelas aksi Lock, Logout, dan Pengaturan agar alur interaksi lebih intuitif bagi pengguna.",
       },
       {
         type: "docs",
         scope: "Aset",
-        title: "Koreksi Path Aset Gambar Diagram",
+        title: "Koreksi Path Aset Diagram Alur",
         description:
-          "Memperbaiki referensi file flow-animation.svg pada berkas dokumentasi markdown.",
+          "Memperbaiki referensi file diagram alur pada berkas dokumentasi aplikasi.",
       },
     ],
   },
@@ -125,18 +125,18 @@ export const releases: ReleaseItem[] = [
     tag: "MVP Phase 1",
     badgeType: "success",
     summary:
-      "Rilis perdana ELockey sebagai aplikasi brankas kredensial pribadi berbasis zero-knowledge dengan enkripsi AES-256-GCM, runtime Bun, Express 5, dan PostgreSQL melalui Prisma ORM 7.",
+      "Rilis perdana ELockey sebagai aplikasi brankas kredensial pribadi dengan arsitektur zero-plaintext storage berbasis enkripsi AES-256-GCM.",
     highlights: [
-      "Zero-Knowledge Architecture",
+      "Zero-Plaintext Storage",
       "AES-256-GCM Encryption",
-      "Bun & Express 5 API",
-      "Prisma ORM 7 + PostgreSQL",
+      "RESTful API Backend",
+      "Relational Database Vault",
     ],
     changes: [
       {
         type: "feat",
         scope: "Core",
-        title: "Penyimpanan Kredensial Zero-Knowledge",
+        title: "Penyimpanan Kredensial Zero-Plaintext",
         description:
           "Username, password, dan catatan aplikasi dienkripsi secara independen sebelum disimpan di database server.",
       },
@@ -150,30 +150,30 @@ export const releases: ReleaseItem[] = [
       {
         type: "feat",
         scope: "Backend",
-        title: "RESTful API Bun + Express 5",
+        title: "Layanan RESTful API Backend",
         description:
-          "Menyediakan endpoint registrasi akun, unlock sesi ke RAM, dan manajemen CRUD entri kredensial.",
+          "Menyediakan endpoint registrasi akun, unlock sesi ke memori terisolasi, dan manajemen CRUD entri kredensial.",
       },
       {
         type: "feat",
         scope: "Database",
-        title: "Integrasi PostgreSQL via Prisma ORM 7",
+        title: "Integrasi Skema Database Relasional",
         description:
-          "Model data User, Vault, dan VaultField dengan relasi cascade delete untuk pembersihan menyeluruh.",
+          "Model data User, Vault, dan VaultField dengan relasi cascade delete untuk pembersihan menyeluruh saat entri dihapus.",
       },
       {
         type: "security",
         scope: "Keamanan",
-        title: "Proteksi Rate Limiting, CORS, dan Helmet",
+        title: "Proteksi Rate Limiting, CORS, dan Security Headers",
         description:
-          "Membatasi upaya serangan brute-force pada endpoint autentikasi dan membatasi header HTTP.",
+          "Membatasi upaya serangan brute-force pada endpoint autentikasi dan menerapkan header proteksi web standar industri.",
       },
       {
         type: "feat",
         scope: "Frontend",
-        title: "Antarmuka SPA Vue 3 & Vite",
+        title: "Antarmuka SPA Web & Kesiapan PWA",
         description:
-          "Fitur pencarian instan, salin kredensial sekali klik, dukungan tema gelap/terang, dan kesiapan PWA.",
+          "Fitur pencarian instan, salin kredensial sekali klik, dukungan tema gelap/terang, dan instalasi PWA di berbagai perangkat.",
       },
     ],
   },
