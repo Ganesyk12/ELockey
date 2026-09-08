@@ -98,15 +98,8 @@ function openStandaloneGenerator(tab: "generator" | "updateKey" = "generator") {
 }
 
 function applyGeneratedPassword() {
-  if (modal.open) {
-    modal.password = genModal.password;
-    modalShowPassword.value = true;
-    genModal.open = false;
-    showToast("Kata sandi diterapkan ke form!");
-  } else {
-    copy(genModal.password, "Kata sandi");
-    genModal.open = false;
-  }
+  copy(genModal.password, "Kata sandi");
+  genModal.open = false;
 }
 
 async function handleUpdateMasterKey() {
@@ -496,24 +489,14 @@ onMounted(load);
           <input id="m-user" v-model="modal.username" type="text" autocomplete="off" />
         </div>
         <div class="form-group">
-          <div class="form-label-row">
-            <label for="m-pass">Password</label>
-            <button
-              type="button"
-              class="gen-trigger-btn"
-              title="Buat kata sandi unik & kuat otomatis"
-              @click="openStandaloneGenerator"
-            >
-              <i class="bi bi-magic"></i> Buat Sandi Kuat
-            </button>
-          </div>
+          <label for="m-pass">Password</label>
           <div class="input-wrap">
             <input
               id="m-pass"
               v-model="modal.password"
               :type="modalShowPassword ? 'text' : 'password'"
               autocomplete="off"
-              placeholder="Ketik atau buat otomatis"
+              placeholder="Enter password"
             />
             <button
               type="button"
@@ -731,14 +714,6 @@ onMounted(load);
                 >
                   Titik ( . )
                 </button>
-                <button
-                  type="button"
-                  class="sep-btn"
-                  :class="{ active: genModal.separator === ' ' }"
-                  @click="genModal.separator = ' '"
-                >
-                  Spasi
-                </button>
               </div>
             </div>
 
@@ -758,8 +733,8 @@ onMounted(load);
           <div class="modal-actions gen-modal-actions">
             <button class="btn btn-secondary" @click="genModal.open = false">Tutup</button>
             <button class="btn btn-primary" @click="applyGeneratedPassword">
-              <i class="bi" :class="modal.open ? 'bi-check2-circle' : 'bi-clipboard-check'"></i>
-              {{ modal.open ? "Gunakan Kata Sandi" : "Salin Kata Sandi" }}
+              <i class="bi bi-clipboard-check"></i>
+              Salin Kata Sandi
             </button>
           </div>
         </template>
